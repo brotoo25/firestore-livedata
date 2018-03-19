@@ -1,4 +1,4 @@
-package uy.com.arara.data.datasource.firebase
+package com.kiwimob.firestore.livedata
 
 import android.arch.lifecycle.LiveData
 import android.util.Log

@@ -1,4 +1,4 @@
-package com.kiwimob.firestorelivedata
+package com.kiwimob.firestore.livedata
 
 import android.arch.lifecycle.LiveData
 import android.util.Log

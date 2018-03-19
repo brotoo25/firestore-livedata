@@ -1,4 +1,4 @@
-package com.kiwimob.firestorelivedata;
+package com.kiwimob.firestore;
 
 import org.junit.Test;
 
