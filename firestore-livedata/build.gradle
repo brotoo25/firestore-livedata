@@ -34,6 +34,7 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Firebase
+    implementation 'com.android.support:support-v4:27.1.1'
     compileOnly 'com.google.firebase:firebase-firestore:16.0.0'
 
     // Architecture Components
