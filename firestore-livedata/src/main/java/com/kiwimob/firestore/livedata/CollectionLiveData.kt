@@ -6,21 +6,48 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
+import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.launch
 
 fun <T> CollectionReference.livedata(clazz: Class<T>): LiveData<List<T>> {
-    return CollectionLiveData(this, { documentSnapshot -> documentSnapshot.toObject(clazz) })
+    return CollectionLiveDataNative(this, clazz)
 }
 
 fun <T> CollectionReference.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
-    return CollectionLiveData(this, parser)
+    return CollectionLiveDataCustom(this, parser)
 }
 
 fun CollectionReference.livedata(): LiveData<QuerySnapshot> {
     return CollectionLiveDataRaw(this)
 }
 
-suspend class CollectionLiveData<T>(private val collectionReference: CollectionReference,
-                                    private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+private class CollectionLiveDataNative<T>(private val collectionReference: CollectionReference,
+                                          private val clazz: Class<T>) : LiveData<List<T>>() {
+
+    private var listener: ListenerRegistration? = null
+
+    override fun onActive() {
+        super.onActive()
+
+        listener = collectionReference.addSnapshotListener({ querySnapshot, exception ->
+            if (exception == null) {
+                launch(UI) { value = querySnapshot?.documents?.map { it.toObject(clazz)!! } }
+            } else {
+                Log.e("FireStoreLiveData", "", exception)
+            }
+        })
+    }
+
+    override fun onInactive() {
+        super.onInactive()
+
+        listener?.remove()
+        listener = null
+    }
+}
+
+private class CollectionLiveDataCustom<T>(private val collectionReference: CollectionReference,
+                                          private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -44,7 +71,7 @@ suspend class CollectionLiveData<T>(private val collectionReference: CollectionR
     }
 }
 
-class CollectionLiveDataRaw(private val collectionReference: CollectionReference) : LiveData<QuerySnapshot>() {
+private class CollectionLiveDataRaw(private val collectionReference: CollectionReference) : LiveData<QuerySnapshot>() {
 
     private var listener: ListenerRegistration? = null
 
