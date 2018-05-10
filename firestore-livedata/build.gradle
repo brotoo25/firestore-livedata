@@ -21,12 +21,20 @@ android {
     }
 }
 
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
+
 dependencies {
     // Kotlin
+    implementation "org.jetbrains.anko:anko-coroutines:0.10.4"
+    implementation "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.22.5"
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Firebase
-    compileOnly 'com.google.firebase:firebase-firestore:11.8.0'
+    compileOnly 'com.google.firebase:firebase-firestore:16.0.0'
 
     // Architecture Components
     compileOnly "android.arch.lifecycle:livedata:1.1.0"

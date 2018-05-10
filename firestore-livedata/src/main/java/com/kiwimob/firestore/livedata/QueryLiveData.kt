@@ -11,7 +11,7 @@ fun <T> Query.livedata(clazz: Class<T>): LiveData<List<T>> {
     return QueryLiveData(this, { documentSnapshot -> documentSnapshot.toObject(clazz) })
 }
 
-fun <T> Query.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
+fun <T> Query.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
     return QueryLiveData(this, parser)
 }
 
@@ -20,7 +20,7 @@ fun Query.livedata(): LiveData<QuerySnapshot> {
 }
 
 class QueryLiveData<T>(private val query: Query,
-                       private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+                       private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -29,7 +29,7 @@ class QueryLiveData<T>(private val query: Query,
 
         listener = query.addSnapshotListener({ querySnapshot, exception ->
             if (exception == null) {
-                value = querySnapshot.documents.map { parser.invoke(it) }
+                launch(UI) { value = querySnapshot?.documents?.map { parser.invoke(it) } }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }

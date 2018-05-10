@@ -10,16 +10,16 @@ fun <T> DocumentReference.livedata(clazz: Class<T>): LiveData<T> {
     return DocumentLiveData(this, { documentSnapshot -> documentSnapshot.toObject(clazz) })
 }
 
-fun <T> DocumentReference.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<T> {
+fun <T> DocumentReference.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<T> {
     return DocumentLiveData(this, parser)
 }
 
-fun DocumentReference.livedata() : LiveData<DocumentSnapshot> {
+fun DocumentReference.livedata(): LiveData<DocumentSnapshot> {
     return DocumentLiveDataRaw(this)
 }
 
 class DocumentLiveData<T>(private val documentReference: DocumentReference,
-                            private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<T>() {
+                          private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<T>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -28,19 +28,20 @@ class DocumentLiveData<T>(private val documentReference: DocumentReference,
 
         listener = documentReference.addSnapshotListener({ documentSnapshot, exception ->
             if (exception == null) {
-                value = parser.invoke(documentSnapshot)
-            } else {
-                Log.e("FireStoreLiveData", "", exception)
+                launch(UI) { value = parser.invoke(documentSnapshot) }
             }
-        })
-    }
+        } else {
+            Log.e("FireStoreLiveData", "", exception)
+        }
+    })
+}
 
-    override fun onInactive() {
-        super.onInactive()
+override fun onInactive() {
+    super.onInactive()
 
-        listener?.remove()
-        listener = null
-    }
+    listener?.remove()
+    listener = null
+}
 }
 
 class DocumentLiveDataRaw(private val documentReference: DocumentReference) : LiveData<DocumentSnapshot>() {
