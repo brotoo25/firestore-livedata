@@ -18,7 +18,7 @@ allprojects {
 
 dependencies {
 
-    implementation 'com.github.brotoo25:firestore-livedata:0.0.3'
+    implementation 'com.github.brotoo25:firestore-livedata:0.0.6'
 }
 ```
 
