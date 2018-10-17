@@ -2,7 +2,7 @@
 
 ## What's this?
 
-Set of Kotlin extension functions used to convert realtime updates of Firebase FireStore collections/documents into LiveData objects from Android Architecture Components.
+Set of Kotlin extension functions used to convert realtime updates from Firebase Firestore collections/documents into LiveData objects (Android Architecture Components).
 
 ## Download
 
@@ -18,7 +18,7 @@ allprojects {
 
 dependencies {
 
-    implementation 'com.github.brotoo25:firestore-livedata:0.0.2'
+    implementation 'com.github.brotoo25:firestore-livedata:0.0.3'
 }
 ```
 
@@ -65,7 +65,7 @@ private fun parseUser(documentSnapshot: DocumentSnapshot) : User {
 }
  ```
 
-#### Functions available for FireStore - Collections, Documents and Query.
+#### Functions available for FireStore - Collections, Documents and Queries.
 
 ## Next steps
 
