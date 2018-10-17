@@ -5,7 +5,7 @@ import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 
 fun <T> DocumentReference.livedata(clazz: Class<T>): LiveData<T> {
@@ -28,7 +28,7 @@ private class DocumentLiveDataNative<T>(private val documentReference: DocumentR
     override fun onActive() {
         super.onActive()
 
-        listener = documentReference.addSnapshotListener({ documentSnapshot, exception ->
+        listener = documentReference.addSnapshotListener { documentSnapshot, exception ->
             if (exception == null) {
                 documentSnapshot?.let {
                     value = it.toObject(clazz)
@@ -36,7 +36,7 @@ private class DocumentLiveDataNative<T>(private val documentReference: DocumentR
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -55,15 +55,15 @@ class DocumentLiveDataCustom<T>(private val documentReference: DocumentReference
     override fun onActive() {
         super.onActive()
 
-        listener = documentReference.addSnapshotListener({ documentSnapshot, exception ->
+        listener = documentReference.addSnapshotListener { documentSnapshot, exception ->
             if (exception == null) {
                 documentSnapshot?.let {
-                    launch(UI) { value = parser.invoke(it) }
+                    GlobalScope.launch { value = parser.invoke(it) }
                 }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -81,13 +81,13 @@ class DocumentLiveDataRaw(private val documentReference: DocumentReference) : Li
     override fun onActive() {
         super.onActive()
 
-        listener = documentReference.addSnapshotListener({ documentSnapshot, exception ->
+        listener = documentReference.addSnapshotListener { documentSnapshot, exception ->
             if (exception == null) {
                 value = documentSnapshot
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {

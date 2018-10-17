@@ -6,7 +6,7 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
-import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 
 fun <T> CollectionReference.livedata(clazz: Class<T>): LiveData<List<T>> {
@@ -29,13 +29,13 @@ private class CollectionLiveDataNative<T>(private val collectionReference: Colle
     override fun onActive() {
         super.onActive()
 
-        listener = collectionReference.addSnapshotListener({ querySnapshot, exception ->
+        listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                launch(UI) { value = querySnapshot?.documents?.map { it.toObject(clazz)!! } }
+                GlobalScope.launch { value = querySnapshot?.documents?.map { it.toObject(clazz)!! } }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -54,13 +54,13 @@ private class CollectionLiveDataCustom<T>(private val collectionReference: Colle
     override fun onActive() {
         super.onActive()
 
-        listener = collectionReference.addSnapshotListener({ querySnapshot, exception ->
+        listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                launch(UI) { value = querySnapshot?.documents?.map { parser.invoke(it) } }
+                GlobalScope.launch { value = querySnapshot?.documents?.map { parser.invoke(it) } }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -78,13 +78,13 @@ private class CollectionLiveDataRaw(private val collectionReference: CollectionR
     override fun onActive() {
         super.onActive()
 
-        listener = collectionReference.addSnapshotListener({ querySnapshot, exception ->
+        listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
                 value = querySnapshot
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {

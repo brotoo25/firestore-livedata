@@ -6,7 +6,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
-import kotlinx.coroutines.experimental.android.UI
+import kotlinx.coroutines.experimental.GlobalScope
 import kotlinx.coroutines.experimental.launch
 
 fun <T> Query.livedata(clazz: Class<T>): LiveData<List<T>> {
@@ -29,13 +29,13 @@ private class QueryLiveDataNative<T>(private val query: Query,
     override fun onActive() {
         super.onActive()
 
-        listener = query.addSnapshotListener({ querySnapshot, exception ->
+        listener = query.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
                 value = querySnapshot?.documents?.map { it.toObject(clazz)!! }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -54,13 +54,13 @@ private class QueryLiveDataCustom<T>(private val query: Query,
     override fun onActive() {
         super.onActive()
 
-        listener = query.addSnapshotListener({ querySnapshot, exception ->
+        listener = query.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                launch(UI) { value = querySnapshot?.documents?.map { parser.invoke(it) } }
+                GlobalScope.launch { value = querySnapshot?.documents?.map { parser.invoke(it) } }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
@@ -78,13 +78,13 @@ private class QueryLiveDataRaw(private val query: Query) : LiveData<QuerySnapsho
     override fun onActive() {
         super.onActive()
 
-        listener = query.addSnapshotListener({ querySnapshot, exception ->
+        listener = query.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
                 value = querySnapshot
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
-        })
+        }
     }
 
     override fun onInactive() {
