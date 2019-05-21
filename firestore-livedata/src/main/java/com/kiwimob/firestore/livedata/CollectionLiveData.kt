@@ -6,14 +6,12 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
 
 fun <T> CollectionReference.livedata(clazz: Class<T>): LiveData<List<T>> {
     return CollectionLiveDataNative(this, clazz)
 }
 
-fun <T> CollectionReference.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
+fun <T> CollectionReference.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
     return CollectionLiveDataCustom(this, parser)
 }
 
@@ -31,7 +29,7 @@ private class CollectionLiveDataNative<T>(private val collectionReference: Colle
 
         listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                GlobalScope.launch { value = querySnapshot?.documents?.map { it.toObject(clazz)!! } }
+                value = querySnapshot?.documents?.map { it.toObject(clazz)!! }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
@@ -47,7 +45,7 @@ private class CollectionLiveDataNative<T>(private val collectionReference: Colle
 }
 
 private class CollectionLiveDataCustom<T>(private val collectionReference: CollectionReference,
-                                          private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+                                          private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -56,7 +54,7 @@ private class CollectionLiveDataCustom<T>(private val collectionReference: Colle
 
         listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                GlobalScope.launch { value = querySnapshot?.documents?.map { parser.invoke(it) } }
+                value = querySnapshot?.documents?.map { parser.invoke(it) }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }

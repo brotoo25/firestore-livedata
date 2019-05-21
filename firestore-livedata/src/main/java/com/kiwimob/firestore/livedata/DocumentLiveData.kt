@@ -5,14 +5,12 @@ import android.util.Log
 import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
 
 fun <T> DocumentReference.livedata(clazz: Class<T>): LiveData<T> {
     return DocumentLiveDataNative(this, clazz)
 }
 
-fun <T> DocumentReference.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<T> {
+fun <T> DocumentReference.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<T> {
     return DocumentLiveDataCustom(this, parser)
 }
 
@@ -48,7 +46,7 @@ private class DocumentLiveDataNative<T>(private val documentReference: DocumentR
 }
 
 class DocumentLiveDataCustom<T>(private val documentReference: DocumentReference,
-                                private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<T>() {
+                                private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<T>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -58,7 +56,7 @@ class DocumentLiveDataCustom<T>(private val documentReference: DocumentReference
         listener = documentReference.addSnapshotListener { documentSnapshot, exception ->
             if (exception == null) {
                 documentSnapshot?.let {
-                    GlobalScope.launch { value = parser.invoke(it) }
+                    value = parser.invoke(it)
                 }
             } else {
                 Log.e("FireStoreLiveData", "", exception)

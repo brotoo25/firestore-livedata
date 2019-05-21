@@ -6,14 +6,12 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
-import kotlinx.coroutines.experimental.GlobalScope
-import kotlinx.coroutines.experimental.launch
 
 fun <T> Query.livedata(clazz: Class<T>): LiveData<List<T>> {
     return QueryLiveDataNative(this, clazz)
 }
 
-fun <T> Query.livedata(parser: suspend (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
+fun <T> Query.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
     return QueryLiveDataCustom(this, parser)
 }
 
@@ -47,7 +45,7 @@ private class QueryLiveDataNative<T>(private val query: Query,
 }
 
 private class QueryLiveDataCustom<T>(private val query: Query,
-                                     private val parser: suspend (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+                                     private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -56,7 +54,7 @@ private class QueryLiveDataCustom<T>(private val query: Query,
 
         listener = query.addSnapshotListener { querySnapshot, exception ->
             if (exception == null) {
-                GlobalScope.launch { value = querySnapshot?.documents?.map { parser.invoke(it) } }
+                value = querySnapshot?.documents?.map { parser.invoke(it) }
             } else {
                 Log.e("FireStoreLiveData", "", exception)
             }
