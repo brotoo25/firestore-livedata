@@ -1,6 +1,6 @@
 package com.kiwimob.firestore.livedata
 
-import android.arch.lifecycle.LiveData
+import androidx.lifecycle.LiveData
 import android.util.Log
 import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
