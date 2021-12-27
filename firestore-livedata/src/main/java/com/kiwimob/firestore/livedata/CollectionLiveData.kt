@@ -6,21 +6,22 @@ import com.google.firebase.firestore.CollectionReference
 import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.QuerySnapshot
+import java.util.*
 
-fun <T> CollectionReference.livedata(clazz: Class<T>): LiveData<List<T>> {
+fun <T> CollectionReference.livedata(clazz: Class<T>): LiveData<QueryStatus<List<T>>> {
     return CollectionLiveDataNative(this, clazz)
 }
 
-fun <T> CollectionReference.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
+fun <T> CollectionReference.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<QueryStatus<List<T>>> {
     return CollectionLiveDataCustom(this, parser)
 }
 
-fun CollectionReference.livedata(): LiveData<QuerySnapshot> {
+fun CollectionReference.livedata(): LiveData<QueryStatus<QuerySnapshot>> {
     return CollectionLiveDataRaw(this)
 }
 
 private class CollectionLiveDataNative<T>(private val collectionReference: CollectionReference,
-                                          private val clazz: Class<T>) : LiveData<List<T>>() {
+                                          private val clazz: Class<T>) : LiveData<QueryStatus<List<T>>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -28,10 +29,11 @@ private class CollectionLiveDataNative<T>(private val collectionReference: Colle
         super.onActive()
 
         listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot?.documents?.map { it.toObject(clazz)!! }
+            value = if (exception == null) {
+                QueryStatus(querySnapshot?.documents?.map { it.toObject(clazz)!! })
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }
@@ -45,7 +47,7 @@ private class CollectionLiveDataNative<T>(private val collectionReference: Colle
 }
 
 private class CollectionLiveDataCustom<T>(private val collectionReference: CollectionReference,
-                                          private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+                                          private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<QueryStatus<List<T>>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -53,10 +55,14 @@ private class CollectionLiveDataCustom<T>(private val collectionReference: Colle
         super.onActive()
 
         listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot?.documents?.map { parser.invoke(it) }
+            value = if (exception == null) {
+                QueryStatus(
+                    querySnapshot?.documents?.map { parser.invoke(it)!! }
+                    ?: Collections.emptyList()
+                )
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }
@@ -69,7 +75,7 @@ private class CollectionLiveDataCustom<T>(private val collectionReference: Colle
     }
 }
 
-private class CollectionLiveDataRaw(private val collectionReference: CollectionReference) : LiveData<QuerySnapshot>() {
+private class CollectionLiveDataRaw(private val collectionReference: CollectionReference) : LiveData<QueryStatus<QuerySnapshot>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -77,10 +83,11 @@ private class CollectionLiveDataRaw(private val collectionReference: CollectionR
         super.onActive()
 
         listener = collectionReference.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot
+            value = if (exception == null) {
+                QueryStatus(querySnapshot)
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }

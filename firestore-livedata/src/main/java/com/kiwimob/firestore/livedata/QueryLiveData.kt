@@ -7,20 +7,20 @@ import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.QuerySnapshot
 
-fun <T> Query.livedata(clazz: Class<T>): LiveData<List<T>> {
+fun <T> Query.livedata(clazz: Class<T>): LiveData<QueryStatus<List<T>>> {
     return QueryLiveDataNative(this, clazz)
 }
 
-fun <T> Query.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<List<T>> {
+fun <T> Query.livedata(parser: (documentSnapshot: DocumentSnapshot) -> T): LiveData<QueryStatus<List<T>>> {
     return QueryLiveDataCustom(this, parser)
 }
 
-fun Query.livedata(): LiveData<QuerySnapshot> {
+fun Query.livedata(): LiveData<QueryStatus<QuerySnapshot>> {
     return QueryLiveDataRaw(this)
 }
 
 private class QueryLiveDataNative<T>(private val query: Query,
-                                     private val clazz: Class<T>) : LiveData<List<T>>() {
+                                     private val clazz: Class<T>) : LiveData<QueryStatus<List<T>>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -28,10 +28,11 @@ private class QueryLiveDataNative<T>(private val query: Query,
         super.onActive()
 
         listener = query.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot?.documents?.map { it.toObject(clazz)!! }
+            value = if (exception == null) {
+                QueryStatus(querySnapshot?.documents?.map { it.toObject(clazz)!! })
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }
@@ -45,7 +46,7 @@ private class QueryLiveDataNative<T>(private val query: Query,
 }
 
 private class QueryLiveDataCustom<T>(private val query: Query,
-                                     private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<List<T>>() {
+                                     private val parser: (documentSnapshot: DocumentSnapshot) -> T) : LiveData<QueryStatus<List<T>>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -53,10 +54,11 @@ private class QueryLiveDataCustom<T>(private val query: Query,
         super.onActive()
 
         listener = query.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot?.documents?.map { parser.invoke(it) }
+            value = if (exception == null) {
+                QueryStatus(querySnapshot?.documents?.map { parser.invoke(it) })
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }
@@ -69,7 +71,7 @@ private class QueryLiveDataCustom<T>(private val query: Query,
     }
 }
 
-private class QueryLiveDataRaw(private val query: Query) : LiveData<QuerySnapshot>() {
+private class QueryLiveDataRaw(private val query: Query) : LiveData<QueryStatus<QuerySnapshot>>() {
 
     private var listener: ListenerRegistration? = null
 
@@ -77,10 +79,11 @@ private class QueryLiveDataRaw(private val query: Query) : LiveData<QuerySnapsho
         super.onActive()
 
         listener = query.addSnapshotListener { querySnapshot, exception ->
-            if (exception == null) {
-                value = querySnapshot
+            value = if (exception == null) {
+                QueryStatus(querySnapshot)
             } else {
                 Log.e("FireStoreLiveData", "", exception)
+                QueryStatus(exception)
             }
         }
     }
