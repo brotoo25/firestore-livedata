@@ -18,20 +18,21 @@ allprojects {
 
 dependencies {
 
-    implementation 'com.github.brotoo25:firestore-livedata:0.0.8'
+    implementation 'com.github.brotoo25:firestore-livedata:0.0.9'
 }
 ```
 
 ## How to use
 
 ```java
-
+data class User(val name: String?, val email: String?)
+ 
 FirebaseFirestore
         .getInstance()
         .collection("users")
         .livedata()
-        .observe(this, Observer<QuerySnapshot> {
-                Log.d("MainActivity", "${it?.size()}")
+        .observe(this, Observer<QueryStatus<QuerySnapshot>> {
+            Log.d("MainActivity", "${it?.answer?.size()}")
         })
 ```
 
@@ -46,8 +47,8 @@ FirebaseFirestore
         .getInstance()
         .collection("users")
         .livedata(User::class.java)
-        .observe(this, Observer<List<User>> {
-                Log.d("MainActivity", "${it?.size()}")
+        .observe(this, Observer<QueryStatus<List<User>>> {
+            Log.d("MainActivity", "${it?.answer?.size}")
         })
 
 OR
@@ -55,9 +56,9 @@ OR
 FirebaseFirestore
         .getInstance()
         .collection("users")
-        .livedata({parseUser(it)})
-        .observe(this, Observer<List<User>> {
-                Log.d("MainActivity", "${it?.size()}")
+        .livedata { parseUser(it) }
+        .observe(this, Observer<QueryStatus<List<User>>> {
+            Log.d("MainActivity", "${it?.answer?.size}")
         })
 
 private fun parseUser(documentSnapshot: DocumentSnapshot) : User {

@@ -1,1 +1,2 @@
 include ':firestore-livedata'
+include ':sample'

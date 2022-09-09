@@ -2,13 +2,11 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 30
+    compileSdkVersion 33
 
     defaultConfig {
         minSdkVersion 16
-        targetSdkVersion 30
-        versionCode 1
-        versionName "1.0"
+        targetSdkVersion 33
 
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
     }
@@ -32,11 +30,11 @@ dependencies {
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 
     // Firebase
-    compileOnly 'com.google.firebase:firebase-firestore:22.0.0'
+    compileOnly 'com.google.firebase:firebase-firestore:24.3.0'
 
     // Architecture Components
-    compileOnly 'androidx.lifecycle:lifecycle-livedata-ktx:2.2.0'
+    compileOnly 'androidx.lifecycle:lifecycle-livedata-ktx:2.5.1'
 
     // Testing
-    testImplementation 'junit:junit:4.13.1'
+    testImplementation 'junit:junit:4.13.2'
 }
